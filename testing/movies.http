@@ -1,0 +1,34 @@
+### Save movie (POST)
+POST http://localhost:3000/api/v1/movies
+Content-Type: application/json
+
+{
+  "id": "1",
+  "title": "The Matrix",
+  "year": 1999,
+  "genre": "Sci-Fi"
+}
+
+###
+
+### Save movie (POST) - Movie 2
+POST http://localhost:3000/api/v1/movies
+Content-Type: application/json
+
+{
+  "id": "2",
+  "title": "Interstellar",
+  "year": 2014,
+  "genre": "Sci-Fi"
+}
+
+###
+
+### Get movie by ID
+#GET http://localhost:8080/movies/1
+
+###
+
+### Get movie 2
+#GET http://localhost:8080/movies/2
+ 

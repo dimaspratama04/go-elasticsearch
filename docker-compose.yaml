@@ -1,0 +1,50 @@
+services:
+  ### APP
+
+  ### POSTGRES
+  db:
+    container_name: postgresql-16-fearflix
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - fearflix-db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=admin1strator
+      - POSTGRES_PASSWORD=sup3rus3r
+      - POSTGRES_DB=fearflix_db
+
+  ### ELASTICSEARCH
+  es:
+    container_name: elasticsearch-9-fearflix
+    image: docker.elastic.co/elasticsearch/elasticsearch-wolfi:9.2.2
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+      - xpack.monitoring.collection.enabled=false
+      - ELASTIC_PASSWORD=sup3rus3relastic
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - fearflix-es-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
+  ### KIBANA
+  kibana:
+    container_name: kibana-8-fearflix
+    image: docker.elastic.co/kibana/kibana:9.2.2
+    environment:
+      - ELASTICSEARCH_HOSTS=http://es:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - es
+
+volumes:
+  fearflix-db-data:
+  fearflix-es-data:
