@@ -1,9 +1,14 @@
 package entity
 
 type Movies struct {
-	ID       string `json:"id"`
-	Title    string `json:"title"`
-	Genre    string `json:"genre"`
-	Director string `json:"director"`
-	Released int    `json:"released"`
+	ID              int      `json:"id"`
+	Title           string   `json:"title"`
+	Year            int      `json:"year"`
+	Cast            []string `json:"cast"`
+	Genres          []string `json:"genres"`
+	Href            string   `json:"href"`
+	Extract         string   `json:"extract"`
+	Thumbnail       string   `json:"thumbnail"`
+	ThumbnailWidth  int      `json:"thumbnail_width"`
+	ThumbnailHeight int      `json:"thumbnail_height"`
 }

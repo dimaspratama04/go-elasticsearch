@@ -13,6 +13,10 @@ func NewMoviesUseCase(repository *repository.MoviesRepository) *MoviesUseCase {
 	return &MoviesUseCase{Repository: repository}
 }
 
+func (uc *MoviesUseCase) BulkInsertMovies(movies []entity.Movies) error {
+	return uc.Repository.BulkInsert(movies)
+}
+
 func (uc *MoviesUseCase) InsertMovies(movies *entity.Movies) error {
 	return uc.Repository.Insert(movies)
 }
