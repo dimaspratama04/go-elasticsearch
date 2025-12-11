@@ -4,7 +4,7 @@ type Movies struct {
 	ID              int      `json:"id"`
 	Title           string   `json:"title"`
 	Year            int      `json:"year"`
-	Cast            []string `json:"cast"`
+	Cast            []string `json:"casts"`
 	Genres          []string `json:"genres"`
 	Href            string   `json:"href"`
 	Extract         string   `json:"extract"`

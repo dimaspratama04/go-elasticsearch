@@ -1,42 +1,40 @@
 package config
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
-type PostgresConfig struct {
-	Host     string
-	Port     int
-	User     string
-	Password string
-	DBName   string
-	SSLMode  string
-}
-
-func NewPostgresConnection(cfg PostgresConfig) (*sql.DB, error) {
+func InitPostgresConnection(host, username, password, dbname, port, sslmode string) *gorm.DB {
 	// Format connection string
-	connString := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode,
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=Asia/Jakarta",
+		host, username, password, dbname, port, sslmode,
 	)
 
-	// Open a connection
-	db, err := sql.Open("postgres", connString)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
+
 	if err != nil {
-		log.Printf("Unable to connect to database: %v\n", err)
-		return nil, err
+		log.Fatalf("❌ Failed to connect database: %v", err)
 	}
 
-	// Test the connection
-	if err := db.Ping(); err != nil {
-		log.Printf("Unable to ping database: %v\n", err)
-		return nil, err
+	// Get underlying sql.DB untuk connection pool tuning
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("❌ Failed get sql.DB: %v", err)
 	}
 
-	log.Println("Connected to PostgreSQL successfully!")
-	return db, nil
+	sqlDB.SetConnMaxLifetime(time.Hour)
+
+	log.Println("Connected to PostgreSQL")
+
+	return db
 }

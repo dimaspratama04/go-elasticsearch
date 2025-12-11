@@ -4,60 +4,45 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go-elasticsearch/internal/delivery/messaging"
 	"go-elasticsearch/internal/entity"
-	"strconv"
+	"go-elasticsearch/internal/helper"
+	"go-elasticsearch/internal/model"
 
 	"github.com/elastic/go-elasticsearch/v9"
+	"github.com/rabbitmq/amqp091-go"
+	"gorm.io/gorm"
 )
 
 type MoviesRepository struct {
-	ES *elasticsearch.Client
+	ES              *elasticsearch.Client
+	DB              *gorm.DB
+	RabbitMQ        *amqp091.Connection
+	MoviesPublisher *messaging.MoviesPublisher
 }
 
-func NewMoviesRepository(es *elasticsearch.Client) *MoviesRepository {
-	return &MoviesRepository{ES: es}
+func NewMoviesRepository(db *gorm.DB, es *elasticsearch.Client, rabbitmq *amqp091.Connection, moviesPublisher *messaging.MoviesPublisher) *MoviesRepository {
+	return &MoviesRepository{ES: es, DB: db, RabbitMQ: rabbitmq, MoviesPublisher: moviesPublisher}
 }
 
-func (r *MoviesRepository) BulkInsert(movies []entity.Movies) error {
-	var buf bytes.Buffer
-
-	for _, movie := range movies {
-
-		meta := []byte(fmt.Sprintf(`{ "index" : { "_index" : "movies" } }%s`, "\n"))
-
-		data, err := json.Marshal(movie)
-		if err != nil {
-			return err
-		}
-		data = append(data, byte('\n'))
-
-		buf.Grow(len(meta) + len(data))
-		buf.Write(meta)
-		buf.Write(data)
-	}
-
-	resp, err := r.ES.Bulk(bytes.NewReader(buf.Bytes()), r.ES.Bulk.WithIndex("movies"))
-
-	fmt.Println("debug", resp)
-	return err
-}
-
-func (r *MoviesRepository) Insert(movie *entity.Movies) error {
-	movieJSON, err := json.Marshal(movie)
-	var movieID = strconv.Itoa(movie.ID)
-
-	if err != nil {
+func (r *MoviesRepository) Insert(movie *model.Movies) error {
+	// 1) Insert ke PostgreSQL
+	if err := r.DB.Create(movie).Error; err != nil {
 		return err
 	}
 
-	_, err = r.ES.Index(
-		"movies",
-		bytes.NewReader(movieJSON),
-		r.ES.Index.WithDocumentID(movieID),
-		r.ES.Index.WithRefresh("true"),
-	)
+	// 2) Publish ke RabbitMQ
+	if err := r.MoviesPublisher.Publish(movie); err != nil {
+		return err
+	}
 
-	return err
+	return nil
+
+	// return r.DB.Create(movie).Error
+}
+
+func (r *MoviesRepository) BulkInsert(movies []model.Movies) error {
+	return r.DB.CreateInBatches(movies, 1000).Error
 }
 
 func (r *MoviesRepository) GetByID(id string) (*entity.Movies, error) {
@@ -85,51 +70,75 @@ func (r *MoviesRepository) GetByID(id string) (*entity.Movies, error) {
 
 }
 
-func (r *MoviesRepository) GetAllAutoCompleteSuggestions(field, indexName, query string) ([]string, error) {
-	bodyQuery := map[string]interface{}{
-		"suggest": map[string]interface{}{
-			"movie-suggest": map[string]interface{}{
-				"prefix": query,
-				"completion": map[string]interface{}{
-					"field": field, // title_autocomplete, director_autocomplete, etc.
-					"fuzzy": true,
+func (r *MoviesRepository) Search(query string) ([]entity.Movies, error) {
+	var buf bytes.Buffer
+
+	searchQuery := helper.ESQuery{
+		Query: helper.BoolQuery{
+			Bool: helper.BoolShould{
+				Should: []any{
+					helper.MatchPhrase{
+						MatchPhrase: map[string]helper.MatchPhraseField{
+							"title": {
+								Query: query,
+								Slop:  0,
+								Boost: 5,
+							},
+						},
+					},
+					helper.MatchPhrase{
+						MatchPhrase: map[string]helper.MatchPhraseField{
+							"cast": {
+								Query: query,
+								Slop:  0,
+								Boost: 5,
+							},
+						},
+					},
+					helper.MultiMatch{
+						MultiMatch: helper.MultiMatchField{
+							Query:    query,
+							Fields:   []string{"title", "cast"},
+							Fuzzines: "AUTO",
+						},
+					},
 				},
+				MinimalShouldMatch: 1,
 			},
 		},
 	}
 
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(bodyQuery); err != nil {
+	if err := json.NewEncoder(&buf).Encode(searchQuery); err != nil {
 		return nil, err
 	}
 
-	// Perform the search request.
-	resp, err := r.ES.Search(
-		r.ES.Search.WithIndex(indexName),
+	response, err := r.ES.Search(
+		r.ES.Search.WithIndex("movies"),
 		r.ES.Search.WithBody(&buf),
+		r.ES.Search.WithTrackTotalHits(true),
 	)
 
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer response.Body.Close()
 
 	var esResp struct {
-		Suggest map[string][]struct {
-			Options []struct {
-				Text string `json:"text"`
-			} `json:"options"`
-		} `json:"suggest"`
+		Hits struct {
+			Hits []struct {
+				Source entity.Movies `json:"_source"`
+			} `json:"hits"`
+		} `json:"hits"`
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&esResp); err != nil {
+	if err := json.NewDecoder(response.Body).Decode(&esResp); err != nil {
 		return nil, err
 	}
 
-	suggestions := []string{}
-	for _, option := range esResp.Suggest["movie-suggest"][0].Options {
-		suggestions = append(suggestions, option.Text)
+	var movies []entity.Movies
+	for _, hit := range esResp.Hits.Hits {
+		movies = append(movies, hit.Source)
 	}
 
-	return suggestions, nil
+	return movies, nil
 }

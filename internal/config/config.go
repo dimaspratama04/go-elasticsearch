@@ -18,6 +18,11 @@ type Config struct {
 	ElasticURL       string
 	ElasticUsername  string
 	ElasticPassword  string
+	RabbitMQHost     string
+	RabbitMQPort     string
+	RabbitMQUsername string
+	RabbitMQPassword string
+	RabbitMQVhost    string
 }
 
 func LoadConfig() *Config {
@@ -34,6 +39,11 @@ func LoadConfig() *Config {
 		ElasticURL:       getEnv("ELASTIC_URL", "http://localhost:9200"),
 		ElasticUsername:  getEnv("ELASTIC_USERNAME", "elastic"),
 		ElasticPassword:  getEnv("ELASTIC_PASSWORD", "changeme"),
+		RabbitMQHost:     getEnv("RABBITMQ_HOST", "localhost"),
+		RabbitMQPort:     getEnv("RABBITMQ_PORT", "5672"),
+		RabbitMQUsername: getEnv("RABBITMQ_USERNAME", "root"),
+		RabbitMQPassword: getEnv("RABBITMQ_PASSWORD", "changeme"),
+		RabbitMQVhost:    getEnv("RABBITMQ_VHOST", "/"),
 	}
 
 	log.Println("Configuration loaded successfully")

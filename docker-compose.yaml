@@ -21,13 +21,14 @@ services:
     environment:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
-      - xpack.security.enabled=false
+      - xpack.security.enabled=true
       - xpack.monitoring.collection.enabled=false
       - ELASTIC_PASSWORD=sup3rus3relastic
     ulimits:
       memlock:
         soft: -1
         hard: -1
+    mem_limit: 1024m
     volumes:
       - fearflix-es-data:/usr/share/elasticsearch/data
     ports:
@@ -40,10 +41,25 @@ services:
     image: docker.elastic.co/kibana/kibana:9.2.2
     environment:
       - ELASTICSEARCH_HOSTS=http://es:9200
+      - XPACK_FLEET_ENABLED=false
+      - XPACK_FLEET_AGENTS_ENABLED=false
+      - XPACK_FLEET_AGENTS_FLEET_SERVER_ENABLED=false
+    env_file:
+      - .env.kibana
     ports:
       - "5601:5601"
     depends_on:
       - es
+
+  rabbitmq:
+    container_name: rabbitmq-fearlflix
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15627"
+    environment:
+      - RABBITMQ_DEFAULT_USER=root
+      - RABBITMQ_DEFAULT_PASS=sup3rus3r
 
 volumes:
   fearflix-db-data:
