@@ -25,7 +25,7 @@ func main() {
 	usecase := usecase.NewMoviesIndexUseCase(ESMoviesRepository)
 
 	// Init worker
-	worker, err := consumer.NewMoviesConsumerWorker(rabbitmq, usecase, exchangeName)
+	worker, err := consumer.NewMoviesConsumer(rabbitmq, usecase, exchangeName)
 
 	if err != nil {
 		log.Println("[WORKER ERROR] failed connect to broker")

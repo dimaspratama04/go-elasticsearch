@@ -9,13 +9,13 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 )
 
-type MoviesWorker struct {
+type MoviesConsumer struct {
 	channel      *amqp091.Channel
 	usecase      *usecase.MoviesIndexUseCase
 	exchangeName string
 }
 
-func NewMoviesConsumerWorker(conn *amqp091.Connection, uc *usecase.MoviesIndexUseCase, exchangeName string) (*MoviesWorker, error) {
+func NewMoviesConsumer(conn *amqp091.Connection, uc *usecase.MoviesIndexUseCase, exchangeName string) (*MoviesConsumer, error) {
 	ch, err := conn.Channel()
 	if err != nil {
 		return nil, err
@@ -34,14 +34,14 @@ func NewMoviesConsumerWorker(conn *amqp091.Connection, uc *usecase.MoviesIndexUs
 		return nil, err
 	}
 
-	return &MoviesWorker{
+	return &MoviesConsumer{
 		channel:      ch,
 		usecase:      uc,
 		exchangeName: exchangeName,
 	}, nil
 }
 
-func (w *MoviesWorker) Consumer(exchangeName, routingKey string) {
+func (w *MoviesConsumer) Consumer(exchangeName, routingKey string) {
 	q, _ := w.channel.QueueDeclare(
 		exchangeName,
 		true,
@@ -77,7 +77,7 @@ func (w *MoviesWorker) Consumer(exchangeName, routingKey string) {
 
 }
 
-func (w *MoviesWorker) handleMessage(msg amqp091.Delivery) {
+func (w *MoviesConsumer) handleMessage(msg amqp091.Delivery) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("[PANIC] Recovered in consumer: %v\n", r)
