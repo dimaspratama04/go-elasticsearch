@@ -3,7 +3,7 @@ PUT http://localhost:3000/api/v1/movies
 Content-Type: application/json
 
 {
-    "title": "The Grudge",
+    "title": "The Grudgesssssdsd",
     "year": 2020,
     "casts": [
       "Andrea Riseborough",
@@ -24,9 +24,8 @@ Content-Type: application/json
     "thumbnail_height": 326
 }
 
-
 ### Fetch Bulk movie from json data (GET) 
-PUT http://localhost:3000/api/v1/movies/bulk
+GET http://localhost:3000/api/v1/movies/bulk
 Content-Type: application/json
 
 [

@@ -27,6 +27,7 @@ go.work.sum
 # env file
 .env
 .env.kibana
+.env.rabbitmq
 
 # Editor/IDE
 .idea/

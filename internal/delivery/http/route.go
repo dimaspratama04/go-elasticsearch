@@ -25,5 +25,5 @@ func InitializeRoute(rc *RouteConfig) {
 
 	rc.App.Put("/api/v1/movies", moviesController.InsertMovies)
 
-	rc.App.Get("/api/v1/movies/bulk", moviesController.BulkInsertMoviesFromRaw)
+	// rc.App.Put("/api/v1/movies/bulk", moviesController.BulkInsertMoviesFromRaw)
 }
