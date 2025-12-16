@@ -23,7 +23,7 @@ func InitializeRoute(rc *RouteConfig) {
 
 	rc.App.Get("/api/v1/movies", moviesController.SearchMovies)
 
-	rc.App.Put("/api/v1/movies", moviesController.InsertMovies)
+	rc.App.Put("/api/v1/movies", moviesController.CreateMovies)
 
 	// rc.App.Get("/api/v1/movies/bulk", moviesController.BulkInsertMovies)
 }

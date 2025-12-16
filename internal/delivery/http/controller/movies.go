@@ -36,7 +36,7 @@ func (mc *MoviesController) SearchMovies(ctx *fiber.Ctx) error {
 	})
 }
 
-func (mc *MoviesController) InsertMovies(ctx *fiber.Ctx) error {
+func (mc *MoviesController) CreateMovies(ctx *fiber.Ctx) error {
 	// Implementation for creating a new movie
 	var movies model.Movies
 
@@ -91,38 +91,3 @@ func (mc *MoviesController) BulkInsertMovies(ctx *fiber.Ctx) error {
 		"count":   len(movies),
 	})
 }
-
-// func (mc *MoviesController) BulkInsertMoviesFromRaw(ctx *fiber.Ctx) error {
-// 	// src https://github.com/prust/wikipedia-movie-data
-// 	url := "https://raw.githubusercontent.com/prust/wikipedia-movie-data/refs/heads/master/movies.json"
-
-// 	resp, err := http.Get(url)
-
-// 	if err != nil {
-// 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-// 			"status":  "error",
-// 			"message": "failed to fetch movies data",
-// 		})
-// 	}
-
-// 	var movies []models.Movies
-
-// 	if err := json.NewDecoder(resp.Body).Decode(&movies); err != nil {
-// 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-// 			"status":  "error",
-// 			"message": "failed to decode movies data",
-// 		})
-// 	}
-
-// 	if err := mc.Usecase.BulkInsertMovies(movies); err != nil {
-// 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-// 			"status":  "error",
-// 			"message": err.Error(),
-// 		})
-// 	}
-
-// 	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
-// 		"message": "movies created successfully",
-// 		"count":   len(movies),
-// 	})
-// }
