@@ -91,7 +91,7 @@ func (r *MoviesESRepository) Search(query string) ([]entity.Movies, error) {
 							"title": {
 								Query: query,
 								Slop:  0,
-								Boost: 5,
+								Boost: 3,
 							},
 						},
 					},
@@ -100,15 +100,8 @@ func (r *MoviesESRepository) Search(query string) ([]entity.Movies, error) {
 							"cast": {
 								Query: query,
 								Slop:  0,
-								Boost: 5,
+								Boost: 1,
 							},
-						},
-					},
-					helper.MultiMatch{
-						MultiMatch: helper.MultiMatchField{
-							Query:    query,
-							Fields:   []string{"title", "cast"},
-							Fuzzines: "AUTO",
 						},
 					},
 				},
@@ -121,10 +114,17 @@ func (r *MoviesESRepository) Search(query string) ([]entity.Movies, error) {
 		return nil, err
 	}
 
+	fmt.Println("res", searchQuery)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	response, err := r.es.Search(
+		r.es.Search.WithContext(ctx),
 		r.es.Search.WithIndex("movies"),
-		r.es.Search.WithBody(&buf),
-		r.es.Search.WithTrackTotalHits(true),
+		r.es.Search.WithQuery(query),
+		// r.es.Search.WithBody(&buf),
+		r.es.Search.WithTrackTotalHits(false),
 	)
 
 	if err != nil {

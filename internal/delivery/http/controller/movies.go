@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"go-elasticsearch/internal/delivery/http/usecase"
 	"go-elasticsearch/internal/model"
 	"net/http"
@@ -22,6 +23,8 @@ func NewMoviesController(usecase *usecase.MoviesUseCase) *MoviesController {
 func (mc *MoviesController) SearchMovies(ctx *fiber.Ctx) error {
 	// Implementation for searching movies
 	query := ctx.Query("q", "")
+
+	fmt.Println(query)
 
 	movies, err := mc.Usecase.SearchMovies(query)
 	if err != nil {
