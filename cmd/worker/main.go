@@ -2,9 +2,8 @@ package main
 
 import (
 	"go-elasticsearch/internal/config"
-	"go-elasticsearch/internal/delivery/http/usecase"
-	"go-elasticsearch/internal/delivery/messaging/consumer"
-	"go-elasticsearch/internal/repository/elasticsearchdb"
+	"go-elasticsearch/internal/delivery/messaging"
+	"go-elasticsearch/internal/repository"
 	"log"
 )
 
@@ -19,17 +18,12 @@ func main() {
 	elasticsearch := config.InitElasticSearch(cfg.ElasticURL, cfg.ElasticUsername, cfg.ElasticPassword)
 
 	// ES Repository
-	ESMoviesRepository := elasticsearchdb.NewMoviesESRepository(elasticsearch)
-
-	// Index Usecase
-	usecase := usecase.NewMoviesIndexUseCase(ESMoviesRepository)
+	ESMoviesRepository := repository.NewMoviesESRepository(elasticsearch)
 
 	// Init worker
-	worker, err := consumer.NewMoviesConsumer(rabbitmq, usecase, exchangeName)
-
-	if err != nil {
+	worker, _ := messaging.NewMoviesConsumer(rabbitmq, exchangeName, ESMoviesRepository)
+	if err := worker.Consumer(routingKeyName); err != nil {
 		log.Println("[WORKER ERROR] failed connect to broker")
 	}
 
-	worker.Consumer(exchangeName, routingKeyName)
 }

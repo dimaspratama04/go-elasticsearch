@@ -4,9 +4,8 @@ import (
 	"go-elasticsearch/internal/config"
 	"go-elasticsearch/internal/delivery/http"
 	"go-elasticsearch/internal/delivery/http/usecase"
-	"go-elasticsearch/internal/delivery/messaging/publisher"
-	"go-elasticsearch/internal/repository/elasticsearchdb"
-	postgresdb "go-elasticsearch/internal/repository/postgresdb"
+	"go-elasticsearch/internal/delivery/messaging"
+	"go-elasticsearch/internal/repository"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
@@ -23,13 +22,13 @@ func main() {
 	rabbitmq := config.InitRabbitMQConnection(cfg.RabbitMQHost, cfg.RabbitMQPort, cfg.RabbitMQUsername, cfg.RabbitMQPassword, cfg.RabbitMQVhost)
 
 	// Init Movies Messaging Delivery (Pub)
-	moviesPublisher, _ := publisher.NewMoviesPublisher(rabbitmq, "movies")
+	moviesPublisher, _ := messaging.NewMoviesPublisher(rabbitmq, "movies")
 
 	// repository (postgres)
-	PgMoviesRepository := postgresdb.NewMoviesDBRepository(db)
+	PgMoviesRepository := repository.NewMoviesDBRepository(db)
 
 	// repository (elasticsearch)
-	ESMoviesRepository := elasticsearchdb.NewMoviesESRepository(elasticsearch)
+	ESMoviesRepository := repository.NewMoviesESRepository(elasticsearch)
 
 	// usecase
 	moviesUseCase := usecase.NewMoviesUseCase(PgMoviesRepository, ESMoviesRepository, moviesPublisher)

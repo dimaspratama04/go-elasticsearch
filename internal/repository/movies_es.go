@@ -1,4 +1,4 @@
-package elasticsearchdb
+package repository
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"go-elasticsearch/internal/entity"
 	"go-elasticsearch/internal/helper"
 	"go-elasticsearch/internal/model"
+	"time"
 
 	"github.com/elastic/go-elasticsearch/v9"
 )
@@ -33,6 +34,49 @@ func (r *MoviesESRepository) Index(movies *model.Movies) error {
 	)
 
 	return err
+}
+
+func (r *MoviesESRepository) BulkIndex(movies []model.Movies) error {
+	if len(movies) == 0 {
+		return nil
+	}
+
+	var buf bytes.Buffer
+
+	for _, m := range movies {
+		meta := map[string]map[string]string{
+			"index": {
+				"_index": "movies",
+				"_id":    fmt.Sprintf("%d", m.ID),
+			},
+		}
+
+		metaJSON, _ := json.Marshal(meta)
+		dataJSON, _ := json.Marshal(m)
+
+		buf.Write(metaJSON)
+		buf.WriteByte('\n')
+		buf.Write(dataJSON)
+		buf.WriteByte('\n')
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	res, err := r.es.Bulk(
+		bytes.NewReader(buf.Bytes()),
+		r.es.Bulk.WithContext(ctx),
+	)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return fmt.Errorf("bulk index error: %s", res.String())
+	}
+
+	return nil
 }
 
 func (r *MoviesESRepository) Search(query string) ([]entity.Movies, error) {
