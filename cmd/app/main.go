@@ -3,9 +3,9 @@ package main
 import (
 	"go-elasticsearch/internal/config"
 	"go-elasticsearch/internal/delivery/http"
-	"go-elasticsearch/internal/delivery/http/usecase"
 	"go-elasticsearch/internal/delivery/messaging"
 	"go-elasticsearch/internal/repository"
+	"go-elasticsearch/internal/usecase"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
@@ -19,10 +19,16 @@ func main() {
 	// infrastructure
 	elasticsearch := config.InitElasticSearch(cfg.ElasticURL, cfg.ElasticUsername, cfg.ElasticPassword)
 	db := config.InitPostgresConnection(cfg.PostgresHost, cfg.PostgresUser, cfg.PostgresPassword, cfg.PostgresDBName, cfg.PostgresPort, cfg.PostgresSSLMode)
-	rabbitmq := config.InitRabbitMQConnection(cfg.RabbitMQHost, cfg.RabbitMQPort, cfg.RabbitMQUsername, cfg.RabbitMQPassword, cfg.RabbitMQVhost)
+	rabbitmq, err := config.InitRabbitMQConnection(cfg.RabbitMQHost, cfg.RabbitMQPort, cfg.RabbitMQUsername, cfg.RabbitMQPassword, cfg.RabbitMQVhost)
+	if err != nil {
+		log.Info("[FATAL] Failed connect to rabbitmq:", err)
+	}
 
 	// Init Movies Messaging Delivery (Pub)
-	moviesPublisher, _ := messaging.NewMoviesPublisher(rabbitmq, "movies")
+	moviesPublisher, err := messaging.NewMoviesPublisher(rabbitmq, "movies")
+	if err != nil {
+		log.Info("[FATAL] Failed to init publisher:", err)
+	}
 
 	// repository (postgres)
 	PgMoviesRepository := repository.NewMoviesDBRepository(db)

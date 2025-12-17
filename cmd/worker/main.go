@@ -4,7 +4,8 @@ import (
 	"go-elasticsearch/internal/config"
 	"go-elasticsearch/internal/delivery/messaging"
 	"go-elasticsearch/internal/repository"
-	"log"
+
+	"github.com/gofiber/fiber/v2/log"
 )
 
 func main() {
@@ -14,7 +15,11 @@ func main() {
 	routingKeyName := "movies.created"
 
 	// infrastrcucture
-	rabbitmq := config.InitRabbitMQConnection(cfg.RabbitMQHost, cfg.RabbitMQPort, cfg.RabbitMQUsername, cfg.RabbitMQPassword, cfg.RabbitMQVhost)
+	rabbitmq, err := config.InitRabbitMQConnection(cfg.RabbitMQHost, cfg.RabbitMQPort, cfg.RabbitMQUsername, cfg.RabbitMQPassword, cfg.RabbitMQVhost)
+	if err != nil {
+		log.Info("[FATAL] Failed connect to rabbitmq:", err)
+	}
+
 	elasticsearch := config.InitElasticSearch(cfg.ElasticURL, cfg.ElasticUsername, cfg.ElasticPassword)
 
 	// ES Repository
@@ -23,7 +28,7 @@ func main() {
 	// Init worker
 	worker, _ := messaging.NewMoviesConsumer(rabbitmq, exchangeName, ESMoviesRepository)
 	if err := worker.Consumer(routingKeyName); err != nil {
-		log.Println("[WORKER ERROR] failed connect to broker")
+		log.Info("[WORKER ERROR] failed connect to broker")
 	}
 
 }

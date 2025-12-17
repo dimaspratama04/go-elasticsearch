@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -8,7 +9,7 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 )
 
-func InitRabbitMQConnection(host, port, username, password, vhost string) *amqp091.Connection {
+func InitRabbitMQConnection(host, port, username, password, vhost string) (*amqp091.Connection, error) {
 	var rabbitURL string
 
 	if strings.Contains(host, ":") {
@@ -20,10 +21,9 @@ func InitRabbitMQConnection(host, port, username, password, vhost string) *amqp0
 	conn, err := amqp091.Dial(rabbitURL)
 	if err != nil {
 		log.Printf("❌ Failed to connect to RabbitMQ: %v", err)
-		log.Println("Continuing without RabbitMQ connection...")
-		return nil
+		return nil, errors.New("Continuing without RabbitMQ connection")
 	}
 
 	log.Printf("✅ Connected to RabbitMQ at %s", rabbitURL)
-	return conn
+	return conn, nil
 }

@@ -8,6 +8,7 @@ import (
 	"go-elasticsearch/internal/entity"
 	"go-elasticsearch/internal/helper"
 	"go-elasticsearch/internal/model"
+	"strings"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v9"
@@ -110,11 +111,47 @@ func (r *MoviesESRepository) Search(query string) ([]entity.Movies, error) {
 		},
 	}
 
+	reqBody := fmt.Sprintf(`{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "match_phrase": {
+            "Title": {
+              "query": "%s",
+              "slop": 0,
+              "boost": 5
+            }
+          }
+        },
+        {
+          "match_phrase": {
+            "Extract": {
+              "query": "%s",
+              "slop": 0,
+              "boost": 5
+            }
+          }
+        },
+        {
+          "multi_match": {
+            "query": "%s",
+            "fields": ["Titlte^2", "Extract"],
+            "fuzziness": "AUTO",
+            "operator": "and"
+          }
+        }
+      ],
+      "minimum_should_match": 1
+    }
+  }
+}`, query, query, query)
+
+	fmt.Println("req body", reqBody)
+
 	if err := json.NewEncoder(&buf).Encode(searchQuery); err != nil {
 		return nil, err
 	}
-
-	fmt.Println("res", searchQuery)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -122,8 +159,9 @@ func (r *MoviesESRepository) Search(query string) ([]entity.Movies, error) {
 	response, err := r.es.Search(
 		r.es.Search.WithContext(ctx),
 		r.es.Search.WithIndex("movies"),
-		r.es.Search.WithQuery(query),
-		// r.es.Search.WithBody(&buf),
+		// r.es.Search.WithQuery(query),
+		r.es.Search.WithBody(strings.NewReader(reqBody)),
+		r.es.Search.WithSize(20),
 		r.es.Search.WithTrackTotalHits(false),
 	)
 

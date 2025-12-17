@@ -25,7 +25,7 @@ Content-Type: application/json
 }
 
 ### Fetch Bulk movie from json data (GET) 
-GET http://localhost:3000/api/v1/movies/bulk
+PUT http://localhost:3000/api/v1/movies/bulk
 Content-Type: application/json
 
 [
@@ -70,8 +70,7 @@ Content-Type: application/json
     "thumbnail": "https://upload.wikimedia.org/wikipedia/en/3/34/The_Grudge_2020_Poster.jpeg",
     "thumbnail_width": 220,
     "thumbnail_height": 326
-  },
-  {"title": "sd"}
+  }
 ]
 
 

@@ -1,9 +1,11 @@
 package usecase
 
 import (
+	"context"
 	"go-elasticsearch/internal/delivery/messaging"
 	"go-elasticsearch/internal/entity"
 	"go-elasticsearch/internal/model"
+	"go-elasticsearch/internal/model/converter"
 	"go-elasticsearch/internal/repository"
 	"log"
 )
@@ -26,18 +28,19 @@ func NewMoviesUseCase(pg *repository.MoviesDBRepository, es *repository.MoviesES
 	return &MoviesUseCase{pgRepository: pg, esRepository: es, publisher: pub}
 }
 
-func (uc *MoviesUseCase) InsertMovies(movies *model.Movies) error {
+func (uc *MoviesUseCase) InsertMovies(ctx context.Context, request *model.CreateMovieRequest) error {
+	movies := converter.RequestToEntity(request)
 	// 1. insert ke Postgres
-	if err := uc.pgRepository.Create(movies); err != nil {
+	err := uc.pgRepository.Create(movies)
+	if err != nil {
 		log.Println("[ERROR] Failed insert movie to Postgres:", err)
-		return err
 	}
 
 	// 1. pub ke msgbroker
-	if err := uc.publisher.Publish("movies.created", movies); err != nil {
-		log.Println("[ERROR] Failed publish movie event:", err)
-		return err
-	}
+	// if err := uc.publisher.Publish("movies.created", movies); err != nil {
+	// 	log.Println("[ERROR] Failed publish movie event:", err)
+	// 	return err
+	// }
 
 	return nil
 }

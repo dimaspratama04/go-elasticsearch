@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"go-elasticsearch/internal/entity"
 	"go-elasticsearch/internal/model"
 	"log"
 
@@ -15,9 +16,10 @@ func NewMoviesDBRepository(db *gorm.DB) *MoviesDBRepository {
 	return &MoviesDBRepository{db: db}
 }
 
-func (r *MoviesDBRepository) Create(movies *model.Movies) error {
-	if err := r.db.Create(movies).Error; err != nil {
+func (r *MoviesDBRepository) Create(movies *entity.Movies) error {
+	if err := r.db.Table("movies").Create(movies).Error; err != nil {
 		log.Println("[ERROR] Failed insert movie to Postgres:", err)
+		return err
 	}
 
 	return nil

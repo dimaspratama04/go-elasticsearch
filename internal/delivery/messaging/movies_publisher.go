@@ -15,6 +15,10 @@ type MoviesPublisher struct {
 }
 
 func NewMoviesPublisher(conn *amqp091.Connection, exchangeName string) (*MoviesPublisher, error) {
+	if conn == nil {
+		return nil, errors.New("rabbitmq connection is nil")
+	}
+
 	ch, err := conn.Channel()
 	if err != nil {
 		return nil, err
