@@ -3,7 +3,7 @@ package messaging
 import (
 	"encoding/json"
 	"errors"
-	"go-elasticsearch/internal/model"
+	"go-elasticsearch/internal/entity"
 	"log"
 
 	"github.com/rabbitmq/amqp091-go"
@@ -44,7 +44,7 @@ func NewMoviesPublisher(conn *amqp091.Connection, exchangeName string) (*MoviesP
 	}, nil
 }
 
-func (p *MoviesPublisher) Publish(routingKey string, movies *model.Movies) error {
+func (p *MoviesPublisher) Publish(routingKey string, movies *entity.Movies) error {
 	if movies == nil {
 		return errors.New("movies is nil")
 	}

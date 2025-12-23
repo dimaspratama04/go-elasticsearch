@@ -6,9 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-elasticsearch/internal/entity"
-	"go-elasticsearch/internal/helper"
 	"go-elasticsearch/internal/model"
-	"strings"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v9"
@@ -81,75 +79,49 @@ func (r *MoviesESRepository) BulkIndex(movies []model.Movies) error {
 }
 
 func (r *MoviesESRepository) Search(query string) ([]entity.Movies, error) {
-	var buf bytes.Buffer
-
-	searchQuery := helper.ESQuery{
-		Query: helper.BoolQuery{
-			Bool: helper.BoolShould{
-				Should: []any{
-					helper.MatchPhrase{
-						MatchPhrase: map[string]helper.MatchPhraseField{
-							"title": {
-								Query: query,
-								Slop:  0,
-								Boost: 3,
+	queryBody := map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"should": []interface{}{
+					// Search by Title
+					map[string]interface{}{
+						"match_phrase": map[string]interface{}{
+							"Title": map[string]interface{}{
+								"query": query,
+								"slop":  0,
+								"boost": 3,
 							},
 						},
 					},
-					helper.MatchPhrase{
-						MatchPhrase: map[string]helper.MatchPhraseField{
-							"cast": {
-								Query: query,
-								Slop:  0,
-								Boost: 1,
+
+					// Search by Casts
+					map[string]interface{}{
+						"match_phrase": map[string]interface{}{
+							"Casts": map[string]interface{}{
+								"query": query,
+								"slop":  0,
+								"boost": 2,
 							},
+						},
+					},
+
+					// Multi match
+					map[string]interface{}{
+						"multi_match": map[string]interface{}{
+							"query":     query,
+							"fields":    []string{"Title", "Casts"},
+							"fuzziness": "AUTO",
 						},
 					},
 				},
-				MinimalShouldMatch: 1,
+				"minimum_should_match": 1,
 			},
 		},
 	}
 
-	reqBody := fmt.Sprintf(`{
-  "query": {
-    "bool": {
-      "should": [
-        {
-          "match_phrase": {
-            "Title": {
-              "query": "%s",
-              "slop": 0,
-              "boost": 5
-            }
-          }
-        },
-        {
-          "match_phrase": {
-            "Extract": {
-              "query": "%s",
-              "slop": 0,
-              "boost": 5
-            }
-          }
-        },
-        {
-          "multi_match": {
-            "query": "%s",
-            "fields": ["Titlte^2", "Extract"],
-            "fuzziness": "AUTO",
-            "operator": "and"
-          }
-        }
-      ],
-      "minimum_should_match": 1
-    }
-  }
-}`, query, query, query)
+	queryBodyBytes, err := json.Marshal(queryBody)
 
-	fmt.Println("req body", reqBody)
-
-	if err := json.NewEncoder(&buf).Encode(searchQuery); err != nil {
+	if err != nil {
 		return nil, err
 	}
 
@@ -159,8 +131,7 @@ func (r *MoviesESRepository) Search(query string) ([]entity.Movies, error) {
 	response, err := r.es.Search(
 		r.es.Search.WithContext(ctx),
 		r.es.Search.WithIndex("movies"),
-		// r.es.Search.WithQuery(query),
-		r.es.Search.WithBody(strings.NewReader(reqBody)),
+		r.es.Search.WithBody(bytes.NewReader(queryBodyBytes)),
 		r.es.Search.WithSize(20),
 		r.es.Search.WithTrackTotalHits(false),
 	)
@@ -168,6 +139,7 @@ func (r *MoviesESRepository) Search(query string) ([]entity.Movies, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defer response.Body.Close()
 
 	var esResp struct {

@@ -5,7 +5,7 @@ Content-Type: application/json
 {
     "title": "The Grudgesssssdsd",
     "year": 2020,
-    "casts": [
+    "cast": [
       "Andrea Riseborough",
       "Demián Bichir",
       "John Cho",
@@ -32,7 +32,7 @@ Content-Type: application/json
   {
     "title": "The Grudge",
     "year": 2020,
-    "casts": [
+    "cast": [
       "Andrea Riseborough",
       "Demián Bichir",
       "John Cho",
@@ -53,7 +53,7 @@ Content-Type: application/json
   {
     "title": "The Grudge2",
     "year": 2020,
-    "casts": [
+    "cast": [
       "Andrea Riseborough",
       "Demián Bichir",
       "John Cho",

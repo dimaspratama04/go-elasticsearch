@@ -7,16 +7,16 @@ import (
 )
 
 type Movies struct {
-	ID              uint           `json:"id"`
-	Title           string         `json:"title"`
-	Year            int            `json:"year"`
-	Casts           pq.StringArray `json:"casts"`
-	Genres          pq.StringArray `json:"genres"`
-	Href            string         `json:"href"`
-	Extract         string         `json:"extract"`
-	Thumbnail       string         `json:"thumbnail"`
-	ThumbnailWidth  int            `json:"thumbnail_width"`
-	ThumbnailHeight int            `json:"thumbnail_height"`
+	ID              uint `gorm:"primaryKey"`
+	Title           string
+	Year            int
+	Casts           pq.StringArray `gorm:"type:text[]"`
+	Genres          pq.StringArray `gorm:"type:text[]"`
+	Href            string
+	Extract         string `gorm:"type:text"`
+	Thumbnail       string
+	ThumbnailWidth  int
+	ThumbnailHeight int
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }

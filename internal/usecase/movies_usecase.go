@@ -37,15 +37,17 @@ func (uc *MoviesUseCase) InsertMovies(ctx context.Context, request *model.Create
 	}
 
 	// 1. pub ke msgbroker
-	// if err := uc.publisher.Publish("movies.created", movies); err != nil {
-	// 	log.Println("[ERROR] Failed publish movie event:", err)
-	// 	return err
-	// }
+	if err := uc.publisher.Publish("movies.created", movies); err != nil {
+		log.Println("[ERROR] Failed publish movie event:", err)
+		return err
+	}
 
 	return nil
 }
 
-func (uc *MoviesUseCase) BulkInsertMovies(movies []model.Movies) error {
+func (uc *MoviesUseCase) BulkInsertMovies(request []model.CreateMovieRequest) error {
+	movies := converter.RequestToEntities(request)
+
 	// insert ke postgress
 	if err := uc.pgRepository.BulkInsert(movies); err != nil {
 		log.Println("[ERROR] Failed bulk insert to postgres", err)
@@ -66,7 +68,17 @@ func (uc *MoviesUseCase) BulkInsertMovies(movies []model.Movies) error {
 }
 
 func (uc *MoviesUseCase) SearchMovies(query string) ([]entity.Movies, error) {
-	return uc.esRepository.Search(query)
+	data, err := uc.esRepository.Search(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if data == nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func (u *MoviesIndexUseCase) IndexMovies(movies *model.Movies) error {

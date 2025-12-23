@@ -7,6 +7,21 @@ import (
 	"github.com/lib/pq"
 )
 
+func requestToEntity(req model.CreateMovieRequest) entity.Movies {
+	return entity.Movies{
+		Title: req.Title,
+		Year:  req.Year,
+		// Konversi slice biasa ke pq.StringArray
+		Casts:           pq.StringArray(req.Casts),
+		Genres:          pq.StringArray(req.Genres),
+		Href:            req.Href,
+		Extract:         req.Extract,
+		Thumbnail:       req.Thumbnail,
+		ThumbnailWidth:  req.ThumbnailWidth,
+		ThumbnailHeight: req.ThumbnailHeight,
+	}
+}
+
 func EntityToModel(e *entity.Movies) *model.Movies {
 	return &model.Movies{
 		ID:              e.ID,
@@ -41,9 +56,7 @@ func ModelToEntity(m *model.Movies) *entity.Movies {
 
 func RequestToEntity(req *model.CreateMovieRequest) *entity.Movies {
 	return &entity.Movies{
-		Title: req.Title,
-		Year:  req.Year,
-		// Konversi slice biasa ke pq.StringArray
+		Title:           req.Title,
 		Casts:           pq.StringArray(req.Casts),
 		Genres:          pq.StringArray(req.Genres),
 		Href:            req.Href,
@@ -52,6 +65,16 @@ func RequestToEntity(req *model.CreateMovieRequest) *entity.Movies {
 		ThumbnailWidth:  req.ThumbnailWidth,
 		ThumbnailHeight: req.ThumbnailHeight,
 	}
+}
+
+func RequestToEntities(reqs []model.CreateMovieRequest) []entity.Movies {
+	movies := make([]entity.Movies, 0, len(reqs))
+
+	for _, req := range reqs {
+		movies = append(movies, requestToEntity(req))
+	}
+
+	return movies
 }
 
 func MoviesToResponse(movies *entity.Movies) *model.Movies {

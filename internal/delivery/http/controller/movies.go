@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"go-elasticsearch/internal/model"
 	"go-elasticsearch/internal/usecase"
 
@@ -22,8 +21,6 @@ func NewMoviesController(usecase *usecase.MoviesUseCase) *MoviesController {
 func (mc *MoviesController) SearchMovies(c *fiber.Ctx) error {
 	// Implementation for searching movies
 	query := c.Query("q", "")
-
-	fmt.Println(query)
 
 	movies, err := mc.Usecase.SearchMovies(query)
 	if err != nil {
@@ -63,13 +60,13 @@ func (mc *MoviesController) CreateMovies(c *fiber.Ctx) error {
 }
 
 func (mc *MoviesController) BulkInsertMovies(ctx *fiber.Ctx) error {
-	var movies []model.Movies
+	var reqs []model.CreateMovieRequest
 
-	// url := "https://raw.githubusercontent.com/prust/wikipedia-movie-data/refs/heads/master/movies-1980s.json"
+	// url := "https://raw.githubusercontent.com/prust/wikipedia-movie-data/refs/heads/master/movies.json"
 
 	// resp, err := http.Get(url)
 
-	if err := ctx.BodyParser(&movies); err != nil {
+	if err := ctx.BodyParser(&reqs); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"status":  "error",
 			"message": err.Error(),
@@ -83,14 +80,14 @@ func (mc *MoviesController) BulkInsertMovies(ctx *fiber.Ctx) error {
 	// 	})
 	// }
 
-	// if err := json.NewDecoder(resp.Body).Decode(&movies); err != nil {
+	// if err := json.NewDecoder(resp.Body).Decode(&reqs); err != nil {
 	// 	return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 	// 		"status":  "error",
 	// 		"message": "failed to decode movies data",
 	// 	})
 	// }
 
-	if err := mc.Usecase.BulkInsertMovies(movies); err != nil {
+	if err := mc.Usecase.BulkInsertMovies(reqs); err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to insert movies",
 		})
@@ -98,6 +95,6 @@ func (mc *MoviesController) BulkInsertMovies(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "movies created successfully",
-		"count":   len(movies),
+		"count":   len(reqs),
 	})
 }

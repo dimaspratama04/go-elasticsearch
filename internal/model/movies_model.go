@@ -22,7 +22,7 @@ type Movies struct {
 type CreateMovieRequest struct {
 	Title           string   `json:"title" validate:"required"`
 	Year            int      `json:"year"`
-	Casts           []string `json:"casts"`
+	Casts           []string `json:"cast"`
 	Genres          []string `json:"genres"`
 	Href            string   `json:"href"`
 	Extract         string   `json:"extract"`
